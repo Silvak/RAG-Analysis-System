@@ -1,5 +1,5 @@
 const express = require("express");
-const { getEmbedding } = require("../services/embedding");
+const { getEmbeddings } = require("../services/embedding");
 const { getOrCreateCollection } = require("../services/chromaClient");
 const { OpenAI } = require("openai");
 
@@ -11,11 +11,11 @@ router.post("/", async (req, res) => {
   if (!question) return res.status(400).json({ error: "Falta la pregunta" });
 
   try {
-    const embedding = await getEmbedding(question);
+    const [embedding] = await getEmbeddings([question]);
     const collection = await getOrCreateCollection();
 
     const results = await collection.query({
-      queryEmbeddings: [embedding],
+      queryEmbeddings: [embedding], // ← corregido aquí
       nResults: 5,
     });
 
@@ -31,7 +31,7 @@ router.post("/", async (req, res) => {
     const answer = completion.choices[0].message.content;
     res.json({ answer });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error en consulta RAG:", err);
     res.status(500).json({ error: "Error ejecutando la consulta RAG" });
   }
 });
